@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Average Salaries</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Average Salaries</h1>
+    <form action="{{ url_for('home') }}" method="get">
+        <input type="submit" value="Home">
+    </form>
+    <button class="print" onclick="window.print()">Create PDF Report</button>
+    <h2>Overall Average Salaries</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Average Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>All Women</td>
+                <td>{{ overall_avg_salaries.get('Female', 0.0) }}</td>
+            </tr>
+            <tr>
+                <td>All Men</td>
+                <td>{{ overall_avg_salaries.get('Male', 0.0) }}</td>
+            </tr>
+            <tr>
+                <td>All Employees</td>
+                <td>{{
+                    ((overall_avg_salaries.get('Female', 0.0) + overall_avg_salaries.get('Male', 0.0)) / 2)
+                    if overall_avg_salaries.get('Female') and overall_avg_salaries.get('Male')
+                    else 'Data unavailable'
+                }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Average Salaries Per Department</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Department ID</th>
+                <th>Male Average Salary</th>
+                <th>Female Average Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for department_id, genders_avg in department_gender_avg_salaries.items() %}
+                <tr>
+                    <td>{{ department_id }}</td>
+                    <td>{{
+                        genders_avg['Male'] if genders_avg.get('Male') else 'Data unavailable'
+                    }}</td>
+                    <td>{{
+                        genders_avg['Female'] if genders_avg.get('Female') else 'Data unavailable'
+                    }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

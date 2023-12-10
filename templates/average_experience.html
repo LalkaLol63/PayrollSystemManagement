@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Average Experience</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Average Experience</h1>
+    <form action="{{ url_for('home') }}" method="get">
+        <input type="submit" value="Home">
+    </form>
+    <button class="print" onclick="window.print()">Create PDF Report</button>
+    <h2>Overall Average Experience</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Overall Average Experience</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Company</td>
+                <td>{{ overall_avg_experience }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Average Experience Per Department</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Department ID</th>
+                <th>Average Experience</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for department_id, avg_experience in department_avg_experience.items() %}
+                <tr>
+                    <td>{{ department_id }}</td>
+                    <td>{{ avg_experience }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

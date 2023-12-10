@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Average Ages</title>
+    <style>
+        /* Add your CSS styles here */
+        /* Example styles */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Average Ages</h1>
+      <form action="{{ url_for('home') }}" method="get">
+        <input type="submit" value="Home">
+      </form>
+    <button class="print" onclick="window.print()">Create PDF Report</button>
+    <h2>Overall Average Ages</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Average Age</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>All Women</td>
+                <td>{{ overall_avg_age.get('Female', 0.0) }}</td>
+            </tr>
+            <tr>
+                <td>All Men</td>
+                <td>{{ overall_avg_age.get('Male', 0.0) }}</td>
+            </tr>
+            <tr>
+                <td>All Employees</td>
+                <td>{{ (overall_avg_age.get('Female', 0.0) + overall_avg_age.get('Male', 0.0)) / 2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <h2>Average Ages Per Department</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Department ID</th>
+                <th>Male Average Age</th>
+                <th>Female Average Age</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for department_id, genders_avg in department_gender_avg_age.items() %}
+                <tr>
+                    <td>{{ department_id }}</td>
+                    <td>{{ genders_avg['Male'] }}</td>
+                    <td>{{ genders_avg['Female'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
