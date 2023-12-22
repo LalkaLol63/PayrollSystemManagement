@@ -1,161 +1,85 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Payrolls System Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            margin: 0;
-        }
-        h1 {
-            text-align: center;
-        }
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* Allow wrapping for smaller screens */
-            margin-bottom: 10px;
-            padding: 10px;
-        }
-        .button-container form {
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        .delete-button input[type="submit"] {
-            padding: 4px 8px; /* Adjust the padding to reduce the size */
-        }
-        input[type="submit"] {
-            background-color: #6e8a7b;
-            color: white;
-            padding: 12px 24px; /* Adjust padding to make the buttons bigger */
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 180px; /* Adjust width to make the buttons wider */
-        }
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .salary_less_than_n {
-            width: 100%;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .salary_less_than_n form {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
+{% extends "layout.html" %}
 
-            margin-bottom: 0;
-        }
-        .salary_less_than_n input[type="number"] {
-            width: 120px; /* Adjust the width as desired */
-            height: 20px;
-            margin-right: 10px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 0px; /* Add space above the table */
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #D5D6D6;
-        }
-    </style>
-</head>
-<body>
-    <h1>Payrolls System Management</h1>
-    <div class="button-container">
-        <div class="add-user-button">
-            <form method="get" action="/show_add_employee_form">
-                <input type="submit" value="Add Employee">
-            </form>
-        </div>
-        <div class="add-user-button">
-            <form method="get" action="/show_seak_leave_form">
-                <input type="submit" value="Seak Leaves">
-            </form>
-        </div>
-        <div class="show-retirement-button">
-            <form method="get" action="/retirement">
-                <input type="submit" value="Retirement Age Employees">
-            </form>
-        </div>
-        <div class="average-salaries-button">
-            <form method="get" action="/average_salaries">
-                <input type="submit" value="Average Salaries">
-            </form>
-        </div>
-        <div class="average-age-button">
-            <form method="get" action="/average_age">
-                <input type="submit" value="Average Age">
-            </form>
-        </div>
-        <div class="add-experience-button">
-            <form method="get" action="/average_experience">
-                <input type="submit" value="Average Experience">
-            </form>
-        </div>
-        <div class="home">
-            <form method="post" action="/home">
-                <input type="submit" value="All data">
-            </form>
-        </div>
-        <div class="logout">
-            <form method="post" action="/temp">
-                <input type="submit" value="LOG OUT">
-            </form>
-        </div>
-        <div class="salary_less_than_n">
-            <form method="post" action="/salary_less_than_n">
-                <label for="salary_threshold">Enter Salary Threshold:&nbsp;&nbsp;</label>
-                <input type="number" id="salary_threshold" name="salary_threshold" required style="width: 120px;">
-                <input type="submit" value="Show salaries">
-            </form>
-        </div>
+{% block content %}
+<h1>Employees</h1>
+<div class="row justify-content-space-between">
+    <div class="col-3">
+        <form class="form-inline" action="{{ url_for('search_employee') }}" method="POST">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="search_id_or_name" name="search_id_or_name" required
+                    placeholder="Enter name or id">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
     </div>
-    <table border="1">
-        <tr>
-            <th>Employee ID</th>
-            <th>Department ID</th>
-            <th>Name</th>
-            <th>Monthly Salary</th>
-            <th>Year of Birth</th>
-            <th>Date of Employment</th>
-            <th>Marital Status</th>
-            <th>Gender</th>
-            <th>Number of Children</th>
-            <th>Action</th>
-        </tr>
-        {% for employee in employees_data %}
-            <tr>
-                <td>{{ employee[0] }}</td>
-                <td>{{ employee[1] }}</td>
-                <td>{{ employee[2] }}</td>
-                <td>{{ employee[3] }}</td>
-                <td>{{ employee[4] }}</td>
-                <td>{{ employee[5] }}</td>
-                <td>{{ employee[6] }}</td>
-                <td>{{ employee[7] }}</td>
-                <td>{{ employee[8] }}</td>
-                <td>
-                    <form method="POST" action="/delete_employee/{{ employee[0] }}">
-    <input type="hidden" name="_method" value="DELETE"> <!-- Method spoofing for DELETE request -->
-    <button type="submit" style="background-color: #f44336; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">Delete</button>
-</form>
+    <div class="col-3">
+        <form class="salary_less_than_n" method="post" action="{{ url_for('salary_less_than_n') }}">
+            <div class="input-group mb-3">
+                <input type="number" class="form-control" id="salary_threshold" name="salary_threshold" required
+                    placeholder="Enter max salary">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-6 text-end">
+        <a href="{{ url_for('retired_employees') }}" class="btn btn-secondary">Retired employees</a>
+        <a href="{{ url_for('add_employee') }}" class="btn btn-success">+ Add new employee</a>
+    </div>
+</div>
 
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+<table class="table table-striped">
+    <tr>
+        <th>Employee ID</th>
+        <th>Department ID</th>
+        <th>Name</th>
+        <th>Monthly Salary</th>
+        <th>Date of Birth</th>
+        <th>Work experience</th>
+        <th>Marital Status</th>
+        <th>Gender</th>
+        <th>Number of Children</th>
+        <th>Action</th>
+    </tr>
+    {% for employee in employees_data %}
+    <tr>
+        <td>{{ employee.employee_id }}</td>
+        <td>{{ employee.department_id }}</td>
+        <td>{{ employee.name }}</td>
+        <td>{{ employee.monthly_salary }}</td>
+        <td>{{ employee.date_of_birth }}</td>
+        <td>{{ employee.work_experience }}</td>
+        <td>{{ employee.marital_status }}</td>
+        <td>{{ employee.gender}}</td>
+        <td>{{ employee.number_of_children }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('profile', employee_id = employee.employee_id) }}" class="d-inline">
+                <button type="submit" class="btn btn-secondary btn-sm">Profile</button>
+            </form>
+            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                data-bs-target="#delete_modal{{employee.employee_id}}">Delete</button>
+            <div class="modal fade" id="delete_modal{{employee.employee_id}}" tabindex="-1"
+                aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="deleteModalLabel">Deleting an employee</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete an employee with an id {{ employee.employee_id }}?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <form method="POST"
+                                action="{{ url_for('delete_employee', employee_id=employee.employee_id) }}">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock content %}

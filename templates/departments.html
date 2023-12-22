@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Payrolls System Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            /* Allow wrapping for smaller screens */
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        .button-container form {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .delete-button input[type="submit"] {
+            padding: 4px 8px;
+            /* Adjust the padding to reduce the size */
+        }
+
+        input[type="submit"] {
+            background-color: #6e8a7b;
+            color: white;
+            padding: 12px 24px;
+            /* Adjust padding to make the buttons bigger */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 180px;
+            /* Adjust width to make the buttons wider */
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .salary_less_than_n {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .salary_less_than_n form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+
+            margin-bottom: 0;
+        }
+
+        .salary_less_than_n input[type="number"] {
+            width: 120px;
+            /* Adjust the width as desired */
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 50px;
+            /* Add space above the table */
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #D5D6D6;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <h1>Departments</h1>
+        <form action="{{ url_for('home') }}">
+            <input type="submit" value="Home"
+                style="display: inline-block; width: 200px; height: 45px; background-color: #45a049; color: white; border: none; border-radius: 30px; padding: 8px 12px; text-align: center; text-decoration: none; display: inline-block; font-size: 14px; margin-top: 10px;">
+        </form>
+    </div>
+    <table border="1">
+        <tr>
+            <th>Department ID</th>
+            <th>Department name</th>
+            <th>Num of employees</th>
+            <th>Avg salary male</th>
+            <th>Avg salary female</th>
+            <th>Avg work experience</th>
+            <th>Total sick leave duration</th>
+
+        </tr>
+        {% for department in departments_data %}
+        <tr>
+            <td>{{ department.department_id }}</td>
+            <td>{{ department.department_name }}</td>
+            <td>{{ department.num_employees }}</td>
+            <td>{{ department.avg_salary_male }}</td>
+            <td>{{ department.avg_salary_female }}</td>
+            <td>{{ department.avg_work_experience }}</td>
+            <td>{{ department.total_sick_leave_duration }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>
