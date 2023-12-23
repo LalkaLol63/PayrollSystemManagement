@@ -2,29 +2,9 @@
 
 {% block content %}
 <h1>Employees</h1>
-<div class="row justify-content-space-between">
+<div class="row">
     <div class="col-3">
-        <form class="form-inline" action="{{ url_for('search_employee') }}" method="POST">
-            <div class="input-group mb-3">
-                <input type="text" class="form-control" id="search_id_or_name" name="search_id_or_name" required
-                    placeholder="Enter name or id">
-                <button type="submit" class="btn btn-primary">Search</button>
-            </div>
-        </form>
-    </div>
-    <div class="col-3">
-        <form class="salary_less_than_n" method="post" action="{{ url_for('salary_less_than_n') }}">
-            <div class="input-group mb-3">
-                <input type="number" class="form-control" id="salary_threshold" name="salary_threshold" required
-                    placeholder="Enter max salary">
-                <button type="submit" class="btn btn-primary">Filter</button>
-            </div>
-        </form>
-    </div>
-    <div class="col-6 text-end">
-        <a href="{{ url_for('employees_adjusted_salaries') }}" class="btn btn-secondary">Adjusted salaries</a>
-        <a href="{{ url_for('retired_employees') }}" class="btn btn-secondary">Retired employees</a>
-        <a href="{{ url_for('add_employee') }}" class="btn btn-success">+ Add new employee</a>
+        <a href="{{ url_for('employees') }}" class="btn btn-success">Back to all employees</a>
     </div>
 </div>
 
@@ -34,11 +14,9 @@
         <th>Department ID</th>
         <th>Name</th>
         <th>Monthly Salary</th>
-        <th>Date of Birth</th>
         <th>Work experience</th>
-        <th>Marital Status</th>
-        <th>Gender</th>
-        <th>Number of Children</th>
+        <th>Current month sick leaves duration</th>
+        <th>Adjusted salary</th>
         <th>Action</th>
     </tr>
     {% for employee in employees_data %}
@@ -47,13 +25,11 @@
         <td>{{ employee.department_id }}</td>
         <td>{{ employee.name }}</td>
         <td>{{ employee.monthly_salary }}</td>
-        <td>{{ employee.date_of_birth }}</td>
         <td>{{ employee.work_experience }}</td>
-        <td>{{ employee.marital_status }}</td>
-        <td>{{ employee.gender}}</td>
-        <td>{{ employee.number_of_children }}</td>
+        <td>{{ employee.current_month_sick_leaves_duration }}</td>
+        <td>{{ employee.adjusted_salary}}</td>
         <td>
-            <form method="GET" action="{{ url_for('profile', employee_id = employee.employee_id) }}" class="d-inline">
+            <form method="POST" action="{{ url_for('profile', employee_id = employee.employee_id) }}" class="d-inline">
                 <button type="submit" class="btn btn-secondary btn-sm">Profile</button>
             </form>
             <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="modal"

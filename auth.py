@@ -14,10 +14,12 @@ class Authentication:
         )
         return redis_cli
 
-    def authenticate(self, user_id, user_password):
+    def authenticate(self, user_id, user_password, remember):
         user_data = self.get_user_data(user_id)
 
         if user_data and check_password_hash(user_data["password"], user_password):
+            if remember:
+                session.permanent = True
             if user_data["role"] == "admin":
                 session["admin_logged"] = 1
             else:
@@ -36,6 +38,12 @@ class Authentication:
     def get_current_user_id(self):
         if "user_id" in session and session["user_id"] is not None:
             return session["user_id"]
+        else:
+            return None
+
+    def get_current_user_role(self):
+        if "user_id" in session and session["user_id"] is not None:
+            return self.get_user_data(session["user_id"]).get("role")
         else:
             return None
 
@@ -88,3 +96,6 @@ class Authentication:
             return False
         self.__r.delete(key)
         return True
+
+    def logout_user(self):
+        session.clear()

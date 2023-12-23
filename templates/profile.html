@@ -1,14 +1,154 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Employee #{{ employee.employee_id }} profile</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ employee.name }}</p>
+                            <p><strong>Date of Birth:</strong> {{ employee.date_of_birth }}</p>
+                            <p><strong>Marital Status:</strong> {{ employee.marital_status }}</p>
+                            <p><strong>Gender:</strong> {{ employee.gender }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Department:</strong> {{ employee.department_id }}</p>
+                            <p><strong>Date of Employment:</strong> {{ employee.date_of_employment }}</p>
+                            <p><strong>Monthly Salary:</strong> {{ employee.monthly_salary }}</p>
+                            <p><strong>Number of Children:</strong> {{ employee.number_of_children }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h4>Work Experience</h4>
+                    <p><strong>Years of Experience:</strong> {{ employee.work_experience }}</p>
+                    <hr>
+                    <h4>Current month salary:</h4>
+                    <p><strong>Days of sick leaves:</strong> {{ employee.current_month_sick_leaves_duration }}</p>
+                    <p><strong>Adjusted Salary:</strong> {{ employee.adjusted_salary }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<body>
-    <h1>Profile {{test_id}}</h1>
-</body>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="row justify-content-space-between mt-2">
+                        <h3 class="col-4">Sick leaves</h3>
+                        <div class="col-8 text-end">
+                            <a class="btn btn-success mb-2" data-bs-toggle="collapse" href="#add_new_sick_leave_form"
+                                role="button" aria-expanded="true" aria-controls="add_new_sick_leave_form">
+                                +Add new sick leave
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="collapse {% if add_sick_leave_form.end_date.errors %} show {% endif %}"
+                        id="add_new_sick_leave_form">
+                        <div class="card card-body my-3">
+                            <form method="post" action="{{ url_for('profile', employee_id=employee.employee_id) }}"
+                                class="row g-3">
+                                {{ add_sick_leave_form.hidden_tag() }}
+                                {% if add_sick_leave_form.employee_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in add_sick_leave_form.employee_id.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-group col-md-4">
+                                    {{ add_sick_leave_form.start_date.label(class="form-control-label") }}
+                                    {% if add_sick_leave_form.start_date.errors %}
+                                    {{ add_sick_leave_form.start_date(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in add_sick_leave_form.start_date.errors %}
+                                        <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    {{ add_sick_leave_form.start_date(class="form-control") }}
+                                    {% endif %}
+                                </div>
 
-</html>
+                                <div class="form-group col-md-4">
+                                    {{ add_sick_leave_form.end_date.label(class="form-control-label") }}
+                                    {% if add_sick_leave_form.end_date.errors %}
+                                    {{ add_sick_leave_form.end_date(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in add_sick_leave_form.end_date.errors %}
+                                        <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    {{ add_sick_leave_form.end_date(class="form-control") }}
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 d-flex flex-column">
+                                    <button type="submit" class="btn btn-primary mt-auto" style="width: 100%;">Add sick
+                                        leave</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <h4>Approved sick leaves</h4>
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Sick leave id</th>
+                            <th>Start date</th>
+                            <th>End date</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                        {% for sick_leave in approved_sick_leaves_data %}
+                        <tr>
+                            <td>{{ sick_leave.sick_leave_id }}</td>
+                            <td>{{ sick_leave.start_date }}</td>
+                            <td>{{ sick_leave.end_date }}</td>
+                            <td>{{ sick_leave.duration }}</td>
+                            <td>
+                                <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#delete_modal{{sick_leave.sick_leave}}">Delete</button>
+                                <div class="modal fade" id="delete_modal{{sick_leave.sick_leave}}" tabindex="-1"
+                                    aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="deleteModalLabel">Deleting a sick leave
+                                                </h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete a sick_leave with an id {{
+                                                    sick_leave.sick_leave_id
+                                                    }}?
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                                <form method="POST"
+                                                    action="{{ url_for('delete_sick_leave', sick_leave_id=sick_leave.sick_leave_id) }}">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -49,3 +49,20 @@ class EmployeeForm(FlaskForm):
         "Confirm Password", validators=[DataRequired(), EqualTo("password")]
     )
     submit = SubmitField("Add employee")
+
+
+class SickLeaveForm(FlaskForm):
+    employee_id = IntegerField("Employee Id", validators=[DataRequired()])
+    start_date = DateField("Start date:", validators=[DataRequired()])
+    end_date = DateField("End date:", validators=[DataRequired()])
+
+    submit = SubmitField("Add sick leave")
+
+    def validate_end_date(form, field):
+        start_date = form.start_date.data
+        end_date = field.data
+
+        if end_date < start_date:
+            raise ValidationError(
+                "End date must be greater than or equal to start date."
+            )

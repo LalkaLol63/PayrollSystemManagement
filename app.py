@@ -17,12 +17,14 @@ import redis
 from auth import Authentication
 from forms import *
 from managers.EmployeeManager import EmployeeManager
-from models import Employee
+from managers.SickLeaveManager import SickLeaveManager
+from models import Employee, SickLeave
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 sql_dbase = None
 employee_manager = None
+sick_leave_manager = None
 auth = Authentication()
 
 
@@ -53,8 +55,10 @@ def get_sql_db():
 def before_request():
     """Установление соединения с БД перед выполнением запроса"""
     global employee_manager
+    global sick_leave_manager
     db = get_sql_db()
     employee_manager = EmployeeManager(db)
+    sick_leave_manager = SickLeaveManager(db)
 
 
 @app.teardown_appcontext
@@ -119,20 +123,20 @@ def create_tables():
         print("Error creating tables:", e)
 
 
-@app.route("/")  # Головна сторінка
+@app.route("/")
 def index():
     return redirect(url_for("login"))
 
 
-# Login route for administrators
 @app.route("/login", methods=["GET", "POST"])
 def login():
     login_form = LoginForm()
     if login_form.validate_on_submit():
         user_id = login_form.login.data
         password = login_form.password.data
+        remember = login_form.remember.data
         print(user_id, password)
-        if auth.authenticate(user_id, password):
+        if auth.authenticate(user_id, password, remember):
             user_data = auth.get_user_data(user_id)
             if user_data.get("role") == "admin":
                 return redirect(url_for("employees"))
@@ -146,7 +150,50 @@ def login():
 @app.route("/profile/<employee_id>", methods=["GET", "POST"])
 @auth.employee_login_required
 def profile(employee_id):
-    return render_template("profile.html", test_id=employee_id)
+    add_sick_leave_form = SickLeaveForm(employee_id=employee_id)
+    if add_sick_leave_form.validate_on_submit():
+        print("we are here!")
+        new_sick_leave_status = (
+            "Pending" if auth.get_current_user_role() == "employee" else "Approved"
+        )
+        res = sick_leave_manager.add_new_sick_leave(
+            new_sick_leave=SickLeave(
+                add_sick_leave_form.employee_id.data,
+                add_sick_leave_form.start_date.data,
+                add_sick_leave_form.end_date.data,
+                new_sick_leave_status,
+            )
+        )
+        if not res:
+            flash("Failed to add sick leave. Please try again.", "danger")
+        else:
+            flash("Sick leave added successfully!", "success")
+            return redirect(url_for("profile", employee_id=employee_id))
+    else:
+        print(add_sick_leave_form.errors)
+
+    employee = employee_manager.get_employee_by_id(employee_id)
+    employee_month_sick_leaves = (
+        sick_leave_manager.get_all_sick_leaves_in_current_month_by_employee(
+            employee_id=employee.employee_id
+        )
+    )
+    employee.calculate_current_month_sick_leaves_duration(employee_month_sick_leaves)
+    employee.calculate_adjusted_salary()
+
+    employee_approved_sick_leaves = sick_leave_manager.get_all_sick_leaves_by_employee(
+        employee_id=employee.employee_id
+    )
+    employee_pending_sick_leaves = sick_leave_manager.get_all_sick_leaves_by_employee(
+        employee_id=employee.employee_id, status="Pending"
+    )
+    return render_template(
+        "profile.html",
+        employee=employee,
+        pending_sick_leaves_data=employee_pending_sick_leaves,
+        approved_sick_leaves_data=employee_approved_sick_leaves,
+        add_sick_leave_form=add_sick_leave_form,
+    )
 
 
 @app.route("/home", methods=["GET", "POST"])
@@ -210,6 +257,26 @@ def delete_employee(employee_id):
     return redirect(url_for("employees"))
 
 
+@app.route("/employees_adjusted_salaries", methods=["GET"])
+def employees_adjusted_salaries():
+    employees_list = employee_manager.get_all_employees()
+    for employee in employees_list:
+        employee_month_sick_leaves = (
+            sick_leave_manager.get_all_sick_leaves_in_current_month_by_employee(
+                employee_id=employee.employee_id
+            )
+        )
+        employee.calculate_current_month_sick_leaves_duration(
+            employee_month_sick_leaves
+        )
+        employee.calculate_adjusted_salary()
+        print(employee.adjusted_salary, employee.current_month_sick_leaves_duration)
+        print("hello!")
+    return render_template(
+        "employees_adjusted_salaries.html", employees_data=employees_list
+    )
+
+
 @app.route("/salary_less_than_n", methods=["POST"])
 def salary_less_than_n():
     salary_threshold = float(request.form["salary_threshold"])
@@ -238,16 +305,58 @@ def departments():
     return render_template("departments.html", departments_data=departments_data)
 
 
-@app.route("/seak_leaves", methods=["POST", "GET"])
-def seak_leaves():
-    if request.method == "POST":
-        request_info = request.form.to_dict()
-        res = sql_dbase.add_new_sick_leave(new_sick_leave_info=request_info)
-        if res:
-            flash("Sick leave added successfully!", "success")
+@app.route("/sick_leaves", methods=["POST", "GET"])
+def sick_leaves():
+    add_sick_leave_form = SickLeaveForm()
+    if add_sick_leave_form.validate_on_submit():
+        res = sick_leave_manager.add_new_sick_leave(
+            new_sick_leave=SickLeave(
+                add_sick_leave_form.employee_id.data,
+                add_sick_leave_form.start_date.data,
+                add_sick_leave_form.end_date.data,
+            )
+        )
+        if not res:
+            flash("Failed to add sick leave. Please try again.", "danger")
         else:
-            flash("Failed to add sick leave. Please try again.", "error")
-    return render_template("seak_leaves.html", sick_leaves=sql_dbase.get_sick_leaves())
+            flash("Sick leave added successfully!", "success")
+            return redirect(url_for("sick_leaves"))
+    return render_template(
+        "sick_leaves.html",
+        sick_leaves_data=sick_leave_manager.get_all_sick_leaves(),
+        add_sick_leave_form=add_sick_leave_form,
+    )
+
+
+@app.route("/delete_sick_leave/<sick_leave_id>", methods=["POST"])
+def delete_sick_leave(sick_leave_id):
+    previous_url = request.referrer
+    res = sick_leave_manager.delete_sick_leave(sick_leave_id)
+    if not res:
+        flash("Failed to delete sick leave. Please try again.", "error")
+    else:
+        flash("Sick leave deleted successfully!", "success")
+    return redirect(previous_url or url_for("employees"))
+
+
+@app.route("/add_sick_leave", methods=["GET, POST"])
+def add_sick_leave():
+    add_sick_leave_form = SickLeaveForm()
+    if add_sick_leave_form.validate_on_submit():
+        res = sick_leave_manager.add_new_sick_leave(
+            new_sick_leave=SickLeave(
+                add_sick_leave_form.employee_id.data,
+                add_sick_leave_form.start_date.data,
+                add_sick_leave_form.end_date.data,
+            )
+        )
+        if not res:
+            flash("Failed to add sick leave. Please try again.", "danger")
+        else:
+            flash("Sick leave added successfully!", "success")
+    return render_template(
+        "add_sick_leave.html", add_sick_leave_form=add_sick_leave_form
+    )
 
 
 if __name__ == "__main__":

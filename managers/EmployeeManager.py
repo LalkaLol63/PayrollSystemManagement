@@ -9,36 +9,30 @@ class EmployeeManager(DBManager):
     def __init__(self, db):
         super().__init__(db)
 
+    def _get_employee_list(self, employees_data):
+        return [Employee(**employee_data) for employee_data in employees_data]
+
     def get_all_employees(self):
         query_to_exec = "SELECT * FROM Employees ORDER BY name DESC;"
         all_employees_data = self.execute_query(query=query_to_exec)
-        employee_list = [
-            Employee(**employee_data) for employee_data in all_employees_data
-        ]
-        return employee_list
+        return self._get_employee_list(all_employees_data)
 
     def get_employee_by_id(self, employee_id):
         query_to_exec = "SELECT * FROM Employees WHERE employee_id = %s;"
         employee_data = self.execute_query(query=query_to_exec, params=(employee_id,))
-        return [Employee(**employee_data[0])]
+        return self._get_employee_list(employee_data)[0]
 
     def get_employee_by_name(self, employee_name):
         query_to_exec = "SELECT * FROM Employees WHERE name = %s;"
         employees_data = self.execute_query(
             query=query_to_exec, params=(employee_name,)
         )
-        employee_list_search_by_name = [
-            Employee(**employee_data) for employee_data in employees_data
-        ]
-        return employee_list_search_by_name
+        return self._get_employee_list(employees_data)
 
     def get_employees_with_salary_less_n(self, max_salary):
         query_to_exec = "SELECT * FROM Employees WHERE monthly_salary < %s;"
         employees_data = self.execute_query(query=query_to_exec, params=(max_salary,))
-        employee_list_filter_by_salary = [
-            Employee(**employee_data) for employee_data in employees_data
-        ]
-        return employee_list_filter_by_salary
+        return self._get_employee_list(employees_data)
 
     def get_retirement_employees(self):
         min_date_of_birth_of_retirement = datetime.now() - timedelta(
@@ -48,10 +42,7 @@ class EmployeeManager(DBManager):
         retired_employees_data = self.execute_query(
             query=query_to_exec, params=(min_date_of_birth_of_retirement,)
         )
-        retired_employees_list = [
-            Employee(**employee_data) for employee_data in retired_employees_data
-        ]
-        return retired_employees_list
+        return self._get_employee_list(retired_employees_data)
 
     def add_new_employee(self, new_employee):
         query_to_exec = """
@@ -73,18 +64,10 @@ class EmployeeManager(DBManager):
             query=query_to_exec, params=new_employee_data
         )
         self._db.commit()
-        if new_employee_id:
-            return new_employee_id[0].get("employee_id")
-        else:
-            return None
+        return new_employee_id[0].get("employee_id") if new_employee_id else None
 
     def delete_employee(self, employee_id_to_delete):
-        query_to_exec = "DELETE FROM Employees WHERE employee_id = %s RETURNING *"
-        deleted_employee = self.execute_query(
-            query=query_to_exec, params=(employee_id_to_delete,)
-        )
+        query = "DELETE FROM Employees WHERE employee_id = %s RETURNING *"
+        deleted_employee = self.execute_query(query, (employee_id_to_delete,))
         self._db.commit()
-        if deleted_employee:
-            return True
-        else:
-            return False
+        return bool(deleted_employee)
