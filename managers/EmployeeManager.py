@@ -20,7 +20,7 @@ class EmployeeManager(DBManager):
     def get_employee_by_id(self, employee_id):
         query_to_exec = "SELECT * FROM Employees WHERE employee_id = %s;"
         employee_data = self.execute_query(query=query_to_exec, params=(employee_id,))
-        return self._get_employee_list(employee_data)[0]
+        return self._get_employee_list(employee_data)
 
     def get_employee_by_name(self, employee_name):
         query_to_exec = "SELECT * FROM Employees WHERE name = %s;"
@@ -38,7 +38,7 @@ class EmployeeManager(DBManager):
         min_date_of_birth_of_retirement = datetime.now() - timedelta(
             days=EmployeeManager.RETIREMENT_AGE * 365
         )
-        query_to_exec = "SELECT * FROM Employees WHERE monthly_salary < %s;"
+        query_to_exec = "SELECT * FROM Employees WHERE date_of_birth < %s;"
         retired_employees_data = self.execute_query(
             query=query_to_exec, params=(min_date_of_birth_of_retirement,)
         )

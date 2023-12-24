@@ -53,15 +53,13 @@ class Employee:
         self.current_month_sick_leaves_duration = duration_sum
 
     def calculate_adjusted_salary(self):
-        if not self.current_month_sick_leaves_duration:
-            return
         if self.work_experience < 2:
             sick_leave_percentage = 0.5
         elif 2 <= self.work_experience < 4:
             sick_leave_percentage = 0.2
         else:
             sick_leave_percentage = 0.0
-        print(self.current_month_sick_leaves_duration)
+        print("duration:", self.current_month_sick_leaves_duration)
         adjusted_salary = float(self.monthly_salary) * (
             1 - sick_leave_percentage * self.current_month_sick_leaves_duration / 30
         )

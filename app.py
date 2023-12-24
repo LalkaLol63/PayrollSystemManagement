@@ -68,6 +68,14 @@ def close_db(error):
         g.link_db.close()
 
 
+@app.context_processor
+def inject_sick_leave_count():
+    sick_leave_count = sick_leave_manager.get_total_pending_sick_leaves()
+    return dict(
+        sick_leave_count=sick_leave_count, current_user=auth.get_current_user_role()
+    )
+
+
 def create_tables():
     try:
         conn = connect_to_sql_db()
@@ -147,6 +155,12 @@ def login():
     return render_template("login.html", form=login_form)
 
 
+@app.route("/logout", methods=["GET"])
+def logout():
+    auth.logout_user()
+    return redirect("login")
+
+
 @app.route("/profile/<employee_id>", methods=["GET", "POST"])
 @auth.employee_login_required
 def profile(employee_id):
@@ -169,31 +183,38 @@ def profile(employee_id):
         else:
             flash("Sick leave added successfully!", "success")
             return redirect(url_for("profile", employee_id=employee_id))
+
+    employee_data = employee_manager.get_employee_by_id(employee_id)
+    if not employee_data:
+        flash(f"There's no profile with an id {employee_id}.", "danger")
+        return redirect(url_for("employees"))
     else:
-        print(add_sick_leave_form.errors)
-
-    employee = employee_manager.get_employee_by_id(employee_id)
-    employee_month_sick_leaves = (
-        sick_leave_manager.get_all_sick_leaves_in_current_month_by_employee(
-            employee_id=employee.employee_id
+        employee = employee_data[0]
+        employee_month_sick_leaves = (
+            sick_leave_manager.get_all_sick_leaves_in_current_month_by_employee(
+                employee_id=employee_id
+            )
         )
-    )
-    employee.calculate_current_month_sick_leaves_duration(employee_month_sick_leaves)
-    employee.calculate_adjusted_salary()
+        employee.calculate_current_month_sick_leaves_duration(
+            employee_month_sick_leaves
+        )
+        employee.calculate_adjusted_salary()
 
-    employee_approved_sick_leaves = sick_leave_manager.get_all_sick_leaves_by_employee(
-        employee_id=employee.employee_id
-    )
-    employee_pending_sick_leaves = sick_leave_manager.get_all_sick_leaves_by_employee(
-        employee_id=employee.employee_id, status="Pending"
-    )
-    return render_template(
-        "profile.html",
-        employee=employee,
-        pending_sick_leaves_data=employee_pending_sick_leaves,
-        approved_sick_leaves_data=employee_approved_sick_leaves,
-        add_sick_leave_form=add_sick_leave_form,
-    )
+        employee_approved_sick_leaves = (
+            sick_leave_manager.get_all_sick_leaves_by_employee(employee_id=employee_id)
+        )
+        employee_pending_sick_leaves = (
+            sick_leave_manager.get_all_sick_leaves_by_employee(
+                employee_id=employee_id, status="Pending"
+            )
+        )
+        return render_template(
+            "profile.html",
+            employee=employee,
+            pending_sick_leaves_data=employee_pending_sick_leaves,
+            approved_sick_leaves_data=employee_approved_sick_leaves,
+            add_sick_leave_form=add_sick_leave_form,
+        )
 
 
 @app.route("/home", methods=["GET", "POST"])
@@ -242,7 +263,8 @@ def search_employee():
         search_results = employee_manager.get_employee_by_name(search_info)
 
     if not search_results:
-        flash("Nothing was found.", "error")
+        flash("Nothing was found.", "dark")
+        return redirect(url_for("employees"))
     return render_template("employees.html", employees_data=search_results)
 
 
@@ -296,10 +318,11 @@ def retired_employees():
     if retired_employees_data:
         return render_template("employees.html", employees_data=retired_employees_data)
     else:
+        flash("Not a single retired employee.", "dark")
         return redirect("employees")
 
 
-@app.route("/departments", methods=["POST"])
+@app.route("/departments", methods=["GET"])
 def departments():
     departments_data = sql_dbase.get_all_departments()
     return render_template("departments.html", departments_data=departments_data)
@@ -323,7 +346,11 @@ def sick_leaves():
             return redirect(url_for("sick_leaves"))
     return render_template(
         "sick_leaves.html",
+        employees_data=employee_manager.get_all_employees(),
         sick_leaves_data=sick_leave_manager.get_all_sick_leaves(),
+        pending_sick_leaves_data=sick_leave_manager.get_all_sick_leaves(
+            status="Pending"
+        ),
         add_sick_leave_form=add_sick_leave_form,
     )
 
@@ -337,6 +364,17 @@ def delete_sick_leave(sick_leave_id):
     else:
         flash("Sick leave deleted successfully!", "success")
     return redirect(previous_url or url_for("employees"))
+
+
+@app.route("/approve_sick_leave/<sick_leave_id>", methods=["POST"])
+def approve_sick_leave(sick_leave_id):
+    previous_url = request.referrer
+    res = sick_leave_manager.approve_sick_leave(sick_leave_id)
+    if not res:
+        flash("Failed to approve sick leave. Please try again.", "error")
+    else:
+        flash("Sick leave approved successfully!", "success")
+    return redirect(previous_url or url_for("sick_leaves"))
 
 
 @app.route("/add_sick_leave", methods=["GET, POST"])

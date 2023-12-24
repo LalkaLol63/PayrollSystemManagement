@@ -53,6 +53,11 @@ class SickLeaveManager(DBManager):
         print(all_sick_leaves_data_in_current_month_data)
         return self._get_sick_leaves_list(all_sick_leaves_data_in_current_month_data)
 
+    def get_total_pending_sick_leaves(self):
+        query_to_exec = "SELECT COUNT(*) FROM Sick_Leaves WHERE status = 'Pending'"
+        result = self.execute_query(query=query_to_exec)
+        return result[0][0] if result else 0
+
     def add_new_sick_leave(self, new_sick_leave):
         query_to_exec = """
             INSERT INTO sick_leaves (employee_id, start_date, end_date, status)
@@ -78,3 +83,19 @@ class SickLeaveManager(DBManager):
         )
         self._db.commit()
         return bool(deleted_sick_leave)
+
+    def approve_sick_leave(self, sick_leave_id):
+        existing_sick_leave = self.get_sick_leave_by_id(sick_leave_id)
+
+        if not existing_sick_leave:
+            return False
+
+        if existing_sick_leave[0].status != "Approved":
+            query_to_exec = (
+                "UPDATE Sick_Leaves SET status = 'Approved' WHERE sick_leave_id = %s;"
+            )
+            self.execute_query(query=query_to_exec, params=(sick_leave_id,))
+            self._db.commit()
+            return True
+
+        return False

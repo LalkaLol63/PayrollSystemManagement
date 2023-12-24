@@ -1,0 +1,128 @@
+{% if pending_sick_leaves_data %}
+<h3>Pending sick leaves</h3>
+<table class="table table-striped">
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col style="width: 1%;">
+    </colgroup>
+    <tr>
+        <th>Sick leave id</th>
+        <th>employee_id</th>
+        <th>Start date</th>
+        <th>End date</th>
+        <th>Duration</th>
+        {% if current_user == 'admin' %}
+        <th>Action</th>
+        {% endif %}
+    </tr>
+    {% for sick_leave in pending_sick_leaves_data %}
+    <tr>
+        <td>{{ sick_leave.sick_leave_id }}</td>
+        <td>{{ sick_leave.employee_id}}</td>
+        <td>{{ sick_leave.start_date }}</td>
+        <td>{{ sick_leave.end_date }}</td>
+        <td>{{ sick_leave.duration }}</td>
+        {% if current_user == 'admin' %}
+        <td>
+            <div class="d-flex justify-content-between">
+                <form method="POST" action="{{ url_for('approve_sick_leave', sick_leave_id=sick_leave.sick_leave_id) }}"
+                    class="me-2">
+                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                </form>
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#delete_modal{{sick_leave.sick_leave}}">Delete</button>
+            </div>
+            <div class="modal fade" id="delete_modal{{sick_leave.sick_leave}}" tabindex="-1"
+                aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="deleteModalLabel">Deleting a sick leave</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete a sick_leave with an id {{ sick_leave.sick_leave_id
+                                }}?
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <form method="POST"
+                                action="{{ url_for('delete_sick_leave', sick_leave_id=sick_leave.sick_leave_id) }}">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% if approved_sick_leaves_data %}
+<h3>Approved sick leaves</h3>
+<table class="table table-striped">
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col style="width: 1%;">
+    </colgroup>
+    <tr>
+        <th>Sick leave id</th>
+        <th>employee_id</th>
+        <th>Start date</th>
+        <th>End date</th>
+        <th>Duration</th>
+        {% if current_user == 'admin' %}
+        <th>Action</th>
+        {% endif %}
+    </tr>
+    {% for sick_leave in approved_sick_leaves_data %}
+    <tr>
+        <td>{{ sick_leave.sick_leave_id }}</td>
+        <td>{{ sick_leave.employee_id}}</td>
+        <td>{{ sick_leave.start_date }}</td>
+        <td>{{ sick_leave.end_date }}</td>
+        <td>{{ sick_leave.duration }}</td>
+        {% if current_user == 'admin' %}
+        <td>
+            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                data-bs-target="#delete_modal{{sick_leave.sick_leave}}">Delete</button>
+            <div class="modal fade" id="delete_modal{{sick_leave.sick_leave}}" tabindex="-1"
+                aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="deleteModalLabel">Deleting a sick leave</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete a sick_leave with an id {{ sick_leave.sick_leave_id
+                                }}?
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <form method="POST"
+                                action="{{ url_for('delete_sick_leave', sick_leave_id=sick_leave.sick_leave_id) }}">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
