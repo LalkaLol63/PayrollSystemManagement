@@ -18,6 +18,7 @@ from auth import Authentication
 from forms import *
 from managers.EmployeeManager import EmployeeManager
 from managers.SickLeaveManager import SickLeaveManager
+from managers.DepartmentManager import DepartmentManager
 from models import Employee, SickLeave
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ app.secret_key = os.urandom(24)
 sql_dbase = None
 employee_manager = None
 sick_leave_manager = None
+department_manager = None
 auth = Authentication()
 
 
@@ -56,9 +58,11 @@ def before_request():
     """Установление соединения с БД перед выполнением запроса"""
     global employee_manager
     global sick_leave_manager
+    global department_manager
     db = get_sql_db()
     employee_manager = EmployeeManager(db)
     sick_leave_manager = SickLeaveManager(db)
+    department_manager = DepartmentManager(db)
 
 
 @app.teardown_appcontext
@@ -229,7 +233,35 @@ def employees():
     return render_template("employees.html", employees_data=employees_data)
 
 
+@app.route("/departments", methods=["GET"])
+@auth.employee_login_required
+def departments():
+    departments_data = department_manager.get_all_departments()
+    print(departments_data)
+    return render_template("departments.html", departments_data=departments_data)
+
+
+@app.route("/department_info/<department_id>", methods=["GET"])
+@auth.employee_login_required
+def department_info(department_id):
+    department_data = department_manager.get_department_by_id(department_id)
+    if not department_data:
+        flash(f"There's no department with an id {department_data}.", "danger")
+        return redirect(url_for("departments"))
+    else:
+        department = department_data[0]
+        department_sick_leaves = sick_leave_manager.get_sick_leaves_by_department(
+            department_id
+        )
+        department.calculate_sick_leave_durations(department_sick_leaves)
+        return render_template(
+            "department_info.html",
+            department_data=department,
+        )
+
+
 @app.route("/add_employee", methods=["GET", "POST"])
+@auth.employee_login_required
 def add_employee():
     add_employee_form = EmployeeForm()
     if add_employee_form.validate_on_submit():
@@ -254,6 +286,7 @@ def add_employee():
 
 
 @app.route("/search_employee", methods=["POST"])
+@auth.employee_login_required
 def search_employee():
     search_info = request.form["search_id_or_name"]
     try:
@@ -269,6 +302,7 @@ def search_employee():
 
 
 @app.route("/delete_employee/<employee_id>", methods=["POST"])
+@auth.employee_login_required
 def delete_employee(employee_id):
     res = employee_manager.delete_employee(employee_id_to_delete=employee_id)
     if not res:
@@ -280,6 +314,7 @@ def delete_employee(employee_id):
 
 
 @app.route("/employees_adjusted_salaries", methods=["GET"])
+@auth.employee_login_required
 def employees_adjusted_salaries():
     employees_list = employee_manager.get_all_employees()
     for employee in employees_list:
@@ -300,6 +335,7 @@ def employees_adjusted_salaries():
 
 
 @app.route("/salary_less_than_n", methods=["POST"])
+@auth.employee_login_required
 def salary_less_than_n():
     salary_threshold = float(request.form["salary_threshold"])
     filtered_employees_data = employee_manager.get_employees_with_salary_less_n(
@@ -313,6 +349,7 @@ def salary_less_than_n():
 
 
 @app.route("/retired_employees")
+@auth.employee_login_required
 def retired_employees():
     retired_employees_data = employee_manager.get_retirement_employees()
     if retired_employees_data:
@@ -322,13 +359,8 @@ def retired_employees():
         return redirect("employees")
 
 
-@app.route("/departments", methods=["GET"])
-def departments():
-    departments_data = sql_dbase.get_all_departments()
-    return render_template("departments.html", departments_data=departments_data)
-
-
 @app.route("/sick_leaves", methods=["POST", "GET"])
+@auth.employee_login_required
 def sick_leaves():
     add_sick_leave_form = SickLeaveForm()
     if add_sick_leave_form.validate_on_submit():
@@ -347,7 +379,7 @@ def sick_leaves():
     return render_template(
         "sick_leaves.html",
         employees_data=employee_manager.get_all_employees(),
-        sick_leaves_data=sick_leave_manager.get_all_sick_leaves(),
+        approved_sick_leaves_data=sick_leave_manager.get_all_sick_leaves(),
         pending_sick_leaves_data=sick_leave_manager.get_all_sick_leaves(
             status="Pending"
         ),
@@ -356,6 +388,7 @@ def sick_leaves():
 
 
 @app.route("/delete_sick_leave/<sick_leave_id>", methods=["POST"])
+@auth.employee_login_required
 def delete_sick_leave(sick_leave_id):
     previous_url = request.referrer
     res = sick_leave_manager.delete_sick_leave(sick_leave_id)
@@ -367,6 +400,7 @@ def delete_sick_leave(sick_leave_id):
 
 
 @app.route("/approve_sick_leave/<sick_leave_id>", methods=["POST"])
+@auth.employee_login_required
 def approve_sick_leave(sick_leave_id):
     previous_url = request.referrer
     res = sick_leave_manager.approve_sick_leave(sick_leave_id)
@@ -378,6 +412,7 @@ def approve_sick_leave(sick_leave_id):
 
 
 @app.route("/add_sick_leave", methods=["GET, POST"])
+@auth.employee_login_required
 def add_sick_leave():
     add_sick_leave_form = SickLeaveForm()
     if add_sick_leave_form.validate_on_submit():

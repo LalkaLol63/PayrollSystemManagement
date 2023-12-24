@@ -124,13 +124,10 @@ class CompanyDB:
                             AVG(CASE WHEN e.gender = 'Male' THEN e.monthly_salary END) AS avg_salary_male,
                             AVG(CASE WHEN e.gender = 'Female' THEN e.monthly_salary END) AS avg_salary_female,
                             AVG(%s - EXTRACT(YEAR FROM e.date_of_employment)) AS avg_work_experience,
-                            SUM(sl.duration) AS total_sick_leave_duration
                         FROM
                             Departments3 d
                         JOIN
                             Employees3 e ON d.department_id = e.department_id
-                        LEFT JOIN
-                            Sick_Leaves3 sl ON e.employee_id = sl.employee_id
                         GROUP BY
                             d.department_id;"""
                 ),

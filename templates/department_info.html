@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Department {{ department_data.department_name }} sick leaves</h1>
+<table class="table table-striped">
+    <tr>
+        <th>Month</th>
+        <th>Duration</th>
+    </tr>
+    {% for month, duration in department_data.sick_leave_durations.items() %}
+    <tr>
+        <td>{{ month }}</td>
+        <td>{{ duration }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock content %}

@@ -24,6 +24,17 @@ class SickLeaveManager(DBManager):
         )
         return self._get_sick_leaves_list(all_sick_leaves_data)
 
+    def get_sick_leaves_by_department(self, department_id, status="Approved"):
+        query_to_exec = (
+            "SELECT sl.* FROM Sick_Leaves sl "
+            "JOIN Employees e ON sl.employee_id = e.employee_id "
+            "WHERE e.department_id = %s AND sl.status = %s ORDER BY sl.sick_leave_id DESC"
+        )
+        sick_leaves_data = self.execute_query(
+            query=query_to_exec, params=(department_id, status)
+        )
+        return self._get_sick_leaves_list(sick_leaves_data)
+
     def get_sick_leave_by_id(self, sick_leave_id):
         query_to_exec = "SELECT * FROM Sick_Leaves WHERE sick_leave_id = %s;"
         sick_leave_data = self.execute_query(
